@@ -2,49 +2,42 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UniFramework.Event;
-using UniFramework.Machine;
-using UniFramework.Module;
+using YooAsset;
 
-public class GameManager : ModuleSingleton<GameManager>, IModule
+public class GameManager
 {
-	private bool _isRun = false;
-	private EventGroup _eventGroup = new EventGroup();
-	private StateMachine _machine;
-
-	void IModule.OnCreate(object createParam)
+	private static GameManager _instance;
+	public static GameManager Instance
 	{
-	}
-	void IModule.OnDestroy()
-	{
-		_eventGroup.RemoveAllListener();
-	}
-	void IModule.OnUpdate()
-	{
-		if (_machine != null)
-			_machine.Update();
-	}
-
-	public void Run()
-	{
-		if (_isRun == false)
+		get
 		{
-			_isRun = true;
-
-			// 注册监听事件
-			_eventGroup.AddListener<SceneEventDefine.ChangeToHomeScene>(OnHandleEventMessage);
-			_eventGroup.AddListener<SceneEventDefine.ChangeToBattleScene>(OnHandleEventMessage);
-
-			Debug.Log("开启游戏流程...");
-			_machine = new StateMachine(this);
-			_machine.AddNode<FsmInitGame>();
-			_machine.AddNode<FsmSceneHome>();
-			_machine.AddNode<FsmSceneBattle>();
-			_machine.Run<FsmInitGame>();
+			if (_instance == null)
+				_instance = new GameManager();
+			return _instance;
 		}
-		else
-		{
-			Debug.LogWarning("补丁更新已经正在进行中!");
-		}
+	}
+
+	private readonly EventGroup _eventGroup = new EventGroup();
+
+	/// <summary>
+	/// 协程启动器
+	/// </summary>
+	public MonoBehaviour Behaviour;
+
+
+	private GameManager()
+	{
+		// 注册监听事件
+		_eventGroup.AddListener<SceneEventDefine.ChangeToHomeScene>(OnHandleEventMessage);
+		_eventGroup.AddListener<SceneEventDefine.ChangeToBattleScene>(OnHandleEventMessage);
+	}
+
+	/// <summary>
+	/// 开启一个协程
+	/// </summary>
+	public void StartCoroutine(IEnumerator enumerator)
+	{
+		Behaviour.StartCoroutine(enumerator);
 	}
 
 	/// <summary>
@@ -52,13 +45,13 @@ public class GameManager : ModuleSingleton<GameManager>, IModule
 	/// </summary>
 	private void OnHandleEventMessage(IEventMessage message)
 	{
-		if(message is SceneEventDefine.ChangeToHomeScene)
+		if (message is SceneEventDefine.ChangeToHomeScene)
 		{
-			_machine.ChangeState<FsmSceneHome>();
+			YooAssets.LoadSceneAsync("scene_home");
 		}
-		else if(message is SceneEventDefine.ChangeToBattleScene)
+		else if (message is SceneEventDefine.ChangeToBattleScene)
 		{
-			_machine.ChangeState<FsmSceneBattle>();
+			YooAssets.LoadSceneAsync("scene_battle");
 		}
 	}
 }

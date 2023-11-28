@@ -31,24 +31,18 @@ namespace YooAsset.Editor
 		public List<string> AssetTags { private set; get; }
 
 		/// <summary>
-		/// 是否为原生资源
-		/// </summary>
-		public bool IsRawAsset { private set; get; }
-
-		/// <summary>
 		/// 依赖的资源列表
 		/// </summary>
 		public List<string> DependAssets = new List<string>();
 
 
-		public CollectAssetInfo(ECollectorType collectorType, string bundleName, string address, string assetPath, List<string> assetTags, bool isRawAsset)
+		public CollectAssetInfo(ECollectorType collectorType, string bundleName, string address, string assetPath, List<string> assetTags)
 		{
 			CollectorType = collectorType;
 			BundleName = bundleName;
 			Address = address;
 			AssetPath = assetPath;
 			AssetTags = assetTags;
-			IsRawAsset = isRawAsset;
 		}
 	}
 }

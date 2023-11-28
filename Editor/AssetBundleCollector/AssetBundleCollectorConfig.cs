@@ -10,19 +10,25 @@ namespace YooAsset.Editor
 {
 	public class AssetBundleCollectorConfig
 	{
-		public const string ConfigVersion = "2.2";
+		public const string ConfigVersion = "v2.0.0";
 
 		public const string XmlVersion = "Version";
 		public const string XmlCommon = "Common";
-		public const string XmlUniqueBundleName = "UniqueBundleName";
+
 		public const string XmlShowPackageView = "ShowPackageView";
 		public const string XmlShowEditorAlias = "ShowEditorAlias";
+		public const string XmlUniqueBundleName = "UniqueBundleName";
 
 		public const string XmlPackage = "Package";
 		public const string XmlPackageName = "PackageName";
 		public const string XmlPackageDesc = "PackageDesc";
+		public const string XmlEnableAddressable = "AutoAddressable";
+		public const string XmlLocationToLower = "LocationToLower";
+		public const string XmlIncludeAssetGUID = "IncludeAssetGUID";
+		public const string XmlIgnoreDefaultType = "IgnoreDefaultType";
 
 		public const string XmlGroup = "Group";
+		public const string XmlGroupActiveRule = "GroupActiveRule";
 		public const string XmlGroupName = "GroupName";
 		public const string XmlGroupDesc = "GroupDesc";
 
@@ -33,6 +39,7 @@ namespace YooAsset.Editor
 		public const string XmlAddressRule = "AddressRule";
 		public const string XmlPackRule = "PackRule";
 		public const string XmlFilterRule = "FilterRule";
+		public const string XmlUserData = "UserData";
 		public const string XmlAssetTags = "AssetTags";
 
 		/// <summary>
@@ -69,16 +76,12 @@ namespace YooAsset.Editor
 			if (commonNodeList.Count > 0)
 			{
 				XmlElement commonElement = commonNodeList[0] as XmlElement;
-				if (commonElement.HasAttribute(XmlUniqueBundleName) == false)
-					throw new Exception($"Not found attribute {XmlUniqueBundleName} in {XmlCommon}");
-				if (commonElement.HasAttribute(XmlShowPackageView) == false)
-					throw new Exception($"Not found attribute {XmlShowPackageView} in {XmlCommon}");
-				if (commonElement.HasAttribute(XmlShowEditorAlias) == false)
-					throw new Exception($"Not found attribute {XmlShowEditorAlias} in {XmlCommon}");
-
-				uniqueBundleName = commonElement.GetAttribute(XmlUniqueBundleName) == "True" ? true : false;
-				showPackageView = commonElement.GetAttribute(XmlShowPackageView) == "True" ? true : false;
-				showEditorAlias = commonElement.GetAttribute(XmlShowEditorAlias) == "True" ? true : false;
+				if (commonElement.HasAttribute(XmlShowPackageView))
+					showPackageView = commonElement.GetAttribute(XmlShowPackageView) == "True" ? true : false;
+				if (commonElement.HasAttribute(XmlShowEditorAlias))
+					showEditorAlias = commonElement.GetAttribute(XmlShowEditorAlias) == "True" ? true : false;
+				if (commonElement.HasAttribute(XmlUniqueBundleName))
+					uniqueBundleName = commonElement.GetAttribute(XmlUniqueBundleName) == "True" ? true : false;
 			}
 
 			// 读取包裹配置
@@ -95,6 +98,10 @@ namespace YooAsset.Editor
 				AssetBundleCollectorPackage package = new AssetBundleCollectorPackage();
 				package.PackageName = packageElement.GetAttribute(XmlPackageName);
 				package.PackageDesc = packageElement.GetAttribute(XmlPackageDesc);
+				package.EnableAddressable = packageElement.GetAttribute(XmlEnableAddressable) == "True" ? true : false;
+				package.LocationToLower = packageElement.GetAttribute(XmlLocationToLower) == "True" ? true : false;
+				package.IncludeAssetGUID = packageElement.GetAttribute(XmlIncludeAssetGUID) == "True" ? true : false;
+				package.IgnoreDefaultType = packageElement.GetAttribute(XmlIgnoreDefaultType) == "True" ? true : false;
 				packages.Add(package);
 
 				// 读取分组配置
@@ -102,6 +109,8 @@ namespace YooAsset.Editor
 				foreach (var groupNode in groupNodeList)
 				{
 					XmlElement groupElement = groupNode as XmlElement;
+					if (groupElement.HasAttribute(XmlGroupActiveRule) == false)
+						throw new Exception($"Not found attribute {XmlGroupActiveRule} in {XmlGroup}");
 					if (groupElement.HasAttribute(XmlGroupName) == false)
 						throw new Exception($"Not found attribute {XmlGroupName} in {XmlGroup}");
 					if (groupElement.HasAttribute(XmlGroupDesc) == false)
@@ -110,6 +119,7 @@ namespace YooAsset.Editor
 						throw new Exception($"Not found attribute {XmlAssetTags} in {XmlGroup}");
 
 					AssetBundleCollectorGroup group = new AssetBundleCollectorGroup();
+					group.ActiveRuleName = groupElement.GetAttribute(XmlGroupActiveRule);
 					group.GroupName = groupElement.GetAttribute(XmlGroupName);
 					group.GroupDesc = groupElement.GetAttribute(XmlGroupDesc);
 					group.AssetTags = groupElement.GetAttribute(XmlAssetTags);
@@ -132,6 +142,8 @@ namespace YooAsset.Editor
 							throw new Exception($"Not found attribute {XmlPackRule} in {XmlCollector}");
 						if (collectorElement.HasAttribute(XmlFilterRule) == false)
 							throw new Exception($"Not found attribute {XmlFilterRule} in {XmlCollector}");
+						if (collectorElement.HasAttribute(XmlUserData) == false)
+							throw new Exception($"Not found attribute {XmlUserData} in {XmlCollector}");
 						if (collectorElement.HasAttribute(XmlAssetTags) == false)
 							throw new Exception($"Not found attribute {XmlAssetTags} in {XmlCollector}");
 
@@ -142,20 +154,27 @@ namespace YooAsset.Editor
 						collector.AddressRuleName = collectorElement.GetAttribute(XmlAddressRule);
 						collector.PackRuleName = collectorElement.GetAttribute(XmlPackRule);
 						collector.FilterRuleName = collectorElement.GetAttribute(XmlFilterRule);
+						collector.UserData = collectorElement.GetAttribute(XmlUserData);
 						collector.AssetTags = collectorElement.GetAttribute(XmlAssetTags);
 						group.Collectors.Add(collector);
 					}
 				}
 			}
 
+			// 检测配置错误
+			foreach (var package in packages)
+			{
+				package.CheckConfigError();
+			}
+
 			// 保存配置数据
 			AssetBundleCollectorSettingData.ClearAll();
-			AssetBundleCollectorSettingData.Setting.UniqueBundleName = uniqueBundleName;
 			AssetBundleCollectorSettingData.Setting.ShowPackageView = showPackageView;
 			AssetBundleCollectorSettingData.Setting.ShowEditorAlias = showEditorAlias;
+			AssetBundleCollectorSettingData.Setting.UniqueBundleName = uniqueBundleName;
 			AssetBundleCollectorSettingData.Setting.Packages.AddRange(packages);
 			AssetBundleCollectorSettingData.SaveFile();
-			Debug.Log($"导入配置完毕！");
+			Debug.Log($"Asset bundle collector config import complete！");
 		}
 
 		/// <summary>
@@ -180,9 +199,9 @@ namespace YooAsset.Editor
 
 			// 设置公共配置
 			var commonElement = xmlDoc.CreateElement(XmlCommon);
-			commonElement.SetAttribute(XmlUniqueBundleName, AssetBundleCollectorSettingData.Setting.UniqueBundleName.ToString());
 			commonElement.SetAttribute(XmlShowPackageView, AssetBundleCollectorSettingData.Setting.ShowPackageView.ToString());
 			commonElement.SetAttribute(XmlShowEditorAlias, AssetBundleCollectorSettingData.Setting.ShowEditorAlias.ToString());
+			commonElement.SetAttribute(XmlUniqueBundleName, AssetBundleCollectorSettingData.Setting.UniqueBundleName.ToString());
 			root.AppendChild(commonElement);
 
 			// 设置Package配置
@@ -191,12 +210,17 @@ namespace YooAsset.Editor
 				var packageElement = xmlDoc.CreateElement(XmlPackage);
 				packageElement.SetAttribute(XmlPackageName, package.PackageName);
 				packageElement.SetAttribute(XmlPackageDesc, package.PackageDesc);
+				packageElement.SetAttribute(XmlEnableAddressable, package.EnableAddressable.ToString());
+				packageElement.SetAttribute(XmlLocationToLower, package.LocationToLower.ToString());
+				packageElement.SetAttribute(XmlIncludeAssetGUID, package.IncludeAssetGUID.ToString());
+				packageElement.SetAttribute(XmlIgnoreDefaultType, package.IgnoreDefaultType.ToString());
 				root.AppendChild(packageElement);
 
 				// 设置分组配置
 				foreach (var group in package.Groups)
 				{
 					var groupElement = xmlDoc.CreateElement(XmlGroup);
+					groupElement.SetAttribute(XmlGroupActiveRule, group.ActiveRuleName);
 					groupElement.SetAttribute(XmlGroupName, group.GroupName);
 					groupElement.SetAttribute(XmlGroupDesc, group.GroupDesc);
 					groupElement.SetAttribute(XmlAssetTags, group.AssetTags);
@@ -212,6 +236,7 @@ namespace YooAsset.Editor
 						collectorElement.SetAttribute(XmlAddressRule, collector.AddressRuleName);
 						collectorElement.SetAttribute(XmlPackRule, collector.PackRuleName);
 						collectorElement.SetAttribute(XmlFilterRule, collector.FilterRuleName);
+						collectorElement.SetAttribute(XmlUserData, collector.UserData);
 						collectorElement.SetAttribute(XmlAssetTags, collector.AssetTags);
 						groupElement.AppendChild(collectorElement);
 					}
@@ -220,7 +245,7 @@ namespace YooAsset.Editor
 
 			// 生成配置文件
 			xmlDoc.Save(savePath);
-			Debug.Log($"导出配置完毕！");
+			Debug.Log($"Asset bundle collector config export complete！");
 		}
 
 		/// <summary>
@@ -232,86 +257,6 @@ namespace YooAsset.Editor
 			string configVersion = root.GetAttribute(XmlVersion);
 			if (configVersion == ConfigVersion)
 				return true;
-
-			// 1.0 -> 2.0
-			if (configVersion == "1.0")
-			{
-				// 添加公共元素属性
-				var commonNodeList = root.GetElementsByTagName(XmlCommon);
-				if (commonNodeList.Count > 0)
-				{
-					XmlElement commonElement = commonNodeList[0] as XmlElement;
-					if (commonElement.HasAttribute(XmlShowPackageView) == false)
-						commonElement.SetAttribute(XmlShowPackageView, "False");
-				}
-
-				// 添加包裹元素
-				var packageElement = xmlDoc.CreateElement(XmlPackage);
-				packageElement.SetAttribute(XmlPackageName, "DefaultPackage");
-				packageElement.SetAttribute(XmlPackageDesc, string.Empty);
-				root.AppendChild(packageElement);
-
-				// 获取所有分组元素
-				var groupNodeList = root.GetElementsByTagName(XmlGroup);
-				List<XmlElement> temper = new List<XmlElement>(groupNodeList.Count);
-				foreach (var groupNode in groupNodeList)
-				{
-					XmlElement groupElement = groupNode as XmlElement;
-					var collectorNodeList = groupElement.GetElementsByTagName(XmlCollector);
-					foreach (var collectorNode in collectorNodeList)
-					{
-						XmlElement collectorElement = collectorNode as XmlElement;
-						if (collectorElement.HasAttribute(XmlCollectorGUID) == false)
-							collectorElement.SetAttribute(XmlCollectorGUID, string.Empty);
-					}
-					temper.Add(groupElement);
-				}
-
-				// 将分组元素转移至包裹元素下
-				foreach (var groupElement in temper)
-				{
-					root.RemoveChild(groupElement);
-					packageElement.AppendChild(groupElement);
-				}
-
-				// 更新版本
-				root.SetAttribute(XmlVersion, "2.0");
-				return UpdateXmlConfig(xmlDoc);
-			}
-
-			// 2.0 -> 2.1
-			if (configVersion == "2.0")
-			{
-				// 添加公共元素属性
-				var commonNodeList = root.GetElementsByTagName(XmlCommon);
-				if (commonNodeList.Count > 0)
-				{
-					XmlElement commonElement = commonNodeList[0] as XmlElement;
-					if (commonElement.HasAttribute(XmlUniqueBundleName) == false)
-						commonElement.SetAttribute(XmlUniqueBundleName, "False");
-				}
-
-				// 更新版本
-				root.SetAttribute(XmlVersion, "2.1");
-				return UpdateXmlConfig(xmlDoc);
-			}
-
-			// 2.1 -> 2.2
-			if (configVersion == "2.1")
-			{
-				// 添加公共元素属性
-				var commonNodeList = root.GetElementsByTagName(XmlCommon);
-				if (commonNodeList.Count > 0)
-				{
-					XmlElement commonElement = commonNodeList[0] as XmlElement;
-					if (commonElement.HasAttribute(XmlShowEditorAlias) == false)
-						commonElement.SetAttribute(XmlShowEditorAlias, "False");
-				}
-
-				// 更新版本
-				root.SetAttribute(XmlVersion, "2.2");
-				return UpdateXmlConfig(xmlDoc);
-			}
 
 			return false;
 		}

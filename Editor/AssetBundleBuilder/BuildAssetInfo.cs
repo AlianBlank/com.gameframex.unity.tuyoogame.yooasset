@@ -7,8 +7,6 @@ namespace YooAsset.Editor
 {
 	public class BuildAssetInfo
 	{
-		private string _mainBundleName;
-		private string _shareBundleName;
 		private bool _isAddAssetTags = false;
 		private readonly HashSet<string> _referenceBundleNames = new HashSet<string>();
 
@@ -16,6 +14,11 @@ namespace YooAsset.Editor
 		/// 收集器类型
 		/// </summary>
 		public ECollectorType CollectorType { private set; get; }
+
+		/// <summary>
+		/// 资源包完整名称
+		/// </summary>
+		public string BundleName { private set; get; }
 
 		/// <summary>
 		/// 可寻址地址
@@ -28,24 +31,19 @@ namespace YooAsset.Editor
 		public string AssetPath { private set; get; }
 
 		/// <summary>
-		/// 是否为原生资源
+		/// 资源GUID
 		/// </summary>
-		public bool IsRawAsset { private set; get; }
+		public string AssetGUID { private set; get; }
 
 		/// <summary>
-		/// 是否为着色器资源
+		/// 资源类型
 		/// </summary>
-		public bool IsShaderAsset { private set; get; }
+		public System.Type AssetType { private set; get; }
 
 		/// <summary>
 		/// 资源的分类标签
 		/// </summary>
 		public readonly List<string> AssetTags = new List<string>();
-
-		/// <summary>
-		/// 资源包的分类标签
-		/// </summary>
-		public readonly List<string> BundleTags = new List<string>();
 
 		/// <summary>
 		/// 依赖的所有资源
@@ -54,44 +52,47 @@ namespace YooAsset.Editor
 		public List<BuildAssetInfo> AllDependAssetInfos { private set; get; }
 
 
-		public BuildAssetInfo(ECollectorType collectorType, string mainBundleName, string address, string assetPath, bool isRawAsset)
+		public BuildAssetInfo(ECollectorType collectorType, string bundleName, string address, string assetPath)
 		{
-			_mainBundleName = mainBundleName;
 			CollectorType = collectorType;
+			BundleName = bundleName;
 			Address = address;
 			AssetPath = assetPath;
-			IsRawAsset = isRawAsset;
 
-			System.Type assetType = UnityEditor.AssetDatabase.GetMainAssetTypeAtPath(assetPath);
-			if (assetType == typeof(UnityEngine.Shader) || assetType == typeof(UnityEngine.ShaderVariantCollection))
-				IsShaderAsset = true;
-			else
-				IsShaderAsset = false;
+			AssetGUID = UnityEditor.AssetDatabase.AssetPathToGUID(assetPath);
+			AssetType = UnityEditor.AssetDatabase.GetMainAssetTypeAtPath(assetPath);
 		}
 		public BuildAssetInfo(string assetPath)
 		{
 			CollectorType = ECollectorType.None;
+			BundleName = string.Empty;
 			Address = string.Empty;
 			AssetPath = assetPath;
-			IsRawAsset = false;
 
-			System.Type assetType = UnityEditor.AssetDatabase.GetMainAssetTypeAtPath(assetPath);
-			if (assetType == typeof(UnityEngine.Shader) || assetType == typeof(UnityEngine.ShaderVariantCollection))
-				IsShaderAsset = true;
-			else
-				IsShaderAsset = false;
+			AssetGUID = UnityEditor.AssetDatabase.AssetPathToGUID(assetPath);
+			AssetType = UnityEditor.AssetDatabase.GetMainAssetTypeAtPath(assetPath);
 		}
 
 
 		/// <summary>
 		/// 设置所有依赖的资源
 		/// </summary>
-		public void SetAllDependAssetInfos(List<BuildAssetInfo> dependAssetInfos)
+		public void SetDependAssetInfos(List<BuildAssetInfo> dependAssetInfos)
 		{
 			if (AllDependAssetInfos != null)
 				throw new System.Exception("Should never get here !");
 
 			AllDependAssetInfos = dependAssetInfos;
+		}
+
+		/// <summary>
+		/// 设置为统一的着色器包名
+		/// </summary>
+		public void SetShaderBundleName(string packageName, bool uniqueBundleName)
+		{
+			// 获取着色器打包规则结果
+			PackRuleResult shaderPackRuleResult = DefaultPackRule.CreateShadersPackRuleResult();
+			BundleName = shaderPackRuleResult.GetBundleName(packageName, uniqueBundleName);		
 		}
 
 		/// <summary>
@@ -114,44 +115,6 @@ namespace YooAsset.Editor
 		}
 
 		/// <summary>
-		/// 添加资源包的分类标签
-		/// 说明：传染算法统计到的分类标签
-		/// </summary>
-		public void AddBundleTags(List<string> tags)
-		{
-			foreach (var tag in tags)
-			{
-				if (BundleTags.Contains(tag) == false)
-				{
-					BundleTags.Add(tag);
-				}
-			}
-		}
-
-		/// <summary>
-		/// 资源包名是否存在
-		/// </summary>
-		public bool HasBundleName()
-		{
-			string bundleName = GetBundleName();
-			if (string.IsNullOrEmpty(bundleName))
-				return false;
-			else
-				return true;
-		}
-
-		/// <summary>
-		/// 获取资源包名称
-		/// </summary>
-		public string GetBundleName()
-		{
-			if (CollectorType == ECollectorType.None)
-				return _shareBundleName;
-			else
-				return _mainBundleName;
-		}
-
-		/// <summary>
 		/// 添加关联的资源包名称
 		/// </summary>
 		public void AddReferenceBundleName(string bundleName)
@@ -164,55 +127,33 @@ namespace YooAsset.Editor
 		}
 
 		/// <summary>
-		/// 计算主资源或共享资源的完整包名
+		/// 资源包名是否存在
 		/// </summary>
-		public void CalculateFullBundleName(bool uniqueBundleName, string packageName)
+		public bool HasBundleName()
 		{
-			if (CollectorType == ECollectorType.None)
-			{
-				if (IsRawAsset)
-					throw new Exception("Should never get here !");
-
-				if (IsShaderAsset)
-				{
-					_shareBundleName = YooAssetSettingsData.GetUnityShadersBundleFullName(uniqueBundleName, packageName);
-				}
-				else
-				{
-					if (_referenceBundleNames.Count > 1)
-					{
-						IPackRule packRule = PackDirectory.StaticPackRule;
-						var bundleName = packRule.GetBundleName(new PackRuleData(AssetPath));
-						if (YooAssetSettingsData.Setting.RegularBundleName)
-							bundleName = EditorTools.GetRegularPath(bundleName).Replace('/', '_').Replace('.', '_').ToLower();
-						else
-							bundleName = EditorTools.GetRegularPath(bundleName).ToLower();
-
-						if (uniqueBundleName)
-							_shareBundleName = $"{packageName.ToLower()}_share_{bundleName}.{YooAssetSettingsData.Setting.AssetBundleFileVariant}";
-						else
-							_shareBundleName = $"share_{bundleName}.{YooAssetSettingsData.Setting.AssetBundleFileVariant}";
-					}
-				}
-			}
+			if (string.IsNullOrEmpty(BundleName))
+				return false;
 			else
-			{
-				if (IsRawAsset)
-				{
-					string mainBundleName = $"{_mainBundleName}.{YooAssetSettingsData.Setting.RawBundleFileVariant}";
-					_mainBundleName = mainBundleName.ToLower();
-				}
-				else
-				{
-					string mainBundleName = $"{_mainBundleName}.{YooAssetSettingsData.Setting.AssetBundleFileVariant}";
-					_mainBundleName = mainBundleName.ToLower(); ;
-				}
+				return true;
+		}
 
-				if (uniqueBundleName)
-				{
-					_mainBundleName = $"{packageName.ToLower()}_{_mainBundleName}";
-				}
-			}
+		/// <summary>
+		/// 判断是否为冗余资源
+		/// </summary>
+		public bool IsRedundancyAsset()
+		{
+			if (HasBundleName())
+				return false;
+
+			return _referenceBundleNames.Count > 1;
+		}
+
+		/// <summary>
+		/// 获取关联资源包的数量
+		/// </summary>
+		public int GetReferenceBundleCount()
+		{
+			return _referenceBundleNames.Count;
 		}
 	}
 }

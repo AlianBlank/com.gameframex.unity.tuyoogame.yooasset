@@ -3,21 +3,14 @@ using System.IO;
 using System.Text;
 using YooAsset;
 
-public class EncryptionNone : IEncryptionServices
-{
-	public EncryptResult Encrypt(EncryptFileInfo fileInfo)
-	{
-		EncryptResult result = new EncryptResult();
-		result.LoadMethod = EBundleLoadMethod.Normal;
-		return result;
-	}
-}
-
+/// <summary>
+/// 文件偏移加密方式
+/// </summary>
 public class FileOffsetEncryption : IEncryptionServices
 {
 	public EncryptResult Encrypt(EncryptFileInfo fileInfo)
 	{
-		if(fileInfo.BundleName.Contains("gameres_music"))
+		if (fileInfo.BundleName.Contains("_gameres_audio"))
 		{
 			int offset = 32;
 			byte[] fileData = File.ReadAllBytes(fileInfo.FilePath);
@@ -25,24 +18,27 @@ public class FileOffsetEncryption : IEncryptionServices
 			Buffer.BlockCopy(fileData, 0, encryptedData, offset, fileData.Length);
 
 			EncryptResult result = new EncryptResult();
-			result.LoadMethod = EBundleLoadMethod.LoadFromFileOffset;
+			result.Encrypted = true;
 			result.EncryptedData = encryptedData;
 			return result;
 		}
 		else
 		{
 			EncryptResult result = new EncryptResult();
-			result.LoadMethod = EBundleLoadMethod.Normal;
+			result.Encrypted = false;
 			return result;
 		}
 	}
 }
 
+/// <summary>
+/// 文件流加密方式
+/// </summary>
 public class FileStreamEncryption : IEncryptionServices
 {
 	public EncryptResult Encrypt(EncryptFileInfo fileInfo)
 	{
-		if (fileInfo.BundleName.Contains("gameres_music"))
+		if (fileInfo.BundleName.Contains("_gameres_audio"))
 		{
 			var fileData = File.ReadAllBytes(fileInfo.FilePath);
 			for (int i = 0; i < fileData.Length; i++)
@@ -51,14 +47,14 @@ public class FileStreamEncryption : IEncryptionServices
 			}
 
 			EncryptResult result = new EncryptResult();
-			result.LoadMethod = EBundleLoadMethod.LoadFromStream;
+			result.Encrypted = true;
 			result.EncryptedData = fileData;
 			return result;
 		}
 		else
 		{
 			EncryptResult result = new EncryptResult();
-			result.LoadMethod = EBundleLoadMethod.Normal;
+			result.Encrypted = false;
 			return result;
 		}
 	}

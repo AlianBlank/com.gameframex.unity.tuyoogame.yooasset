@@ -2,13 +2,19 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Diagnostics;
 using UnityEngine;
 
 namespace YooAsset.Editor
 {
 	public class BuildRunner
 	{
-		public static bool EnableLog = true;
+		private static Stopwatch _buildWatch;
+
+		/// <summary>
+		/// 总耗时
+		/// </summary>
+		public static int TotalSeconds = 0;
 
 		/// <summary>
 		/// 执行构建流程
@@ -23,45 +29,42 @@ namespace YooAsset.Editor
 
 			BuildResult buildResult = new BuildResult();
 			buildResult.Success = true;
+			TotalSeconds = 0;
 			for (int i = 0; i < pipeline.Count; i++)
 			{
 				IBuildTask task = pipeline[i];
 				try
 				{
-					var taskAttribute = task.GetType().GetCustomAttribute<TaskAttribute>();
-					Log($"---------------------------------------->{taskAttribute.Desc}<---------------------------------------");
+					_buildWatch = Stopwatch.StartNew();
+					string taskName = task.GetType().Name.Split('_')[0];
+					BuildLogger.Log($"--------------------------------------------->{taskName}<--------------------------------------------");
 					task.Run(context);
+					_buildWatch.Stop();
+
+					// 统计耗时
+					int seconds = GetBuildSeconds();
+					TotalSeconds += seconds;
+					BuildLogger.Log($"{taskName} It takes {seconds} seconds in total");
 				}
 				catch (Exception e)
 				{
+					EditorTools.ClearProgressBar();
 					buildResult.FailedTask = task.GetType().Name;
-					buildResult.FailedInfo = e.ToString();
+					buildResult.ErrorInfo = e.ToString();
 					buildResult.Success = false;
 					break;
 				}
 			}
 
 			// 返回运行结果
+			BuildLogger.Log($"Total build process time: {TotalSeconds} seconds");
 			return buildResult;
 		}
 
-		/// <summary>
-		/// 日志输出
-		/// </summary>
-		public static void Log(string info)
+		private static int GetBuildSeconds()
 		{
-			if (EnableLog)
-			{
-				UnityEngine.Debug.Log(info);
-			}
-		}
-
-		/// <summary>
-		/// 日志输出
-		/// </summary>
-		public static void Info(string info)
-		{
-			UnityEngine.Debug.Log(info);
+			float seconds = _buildWatch.ElapsedMilliseconds / 1000f;
+			return (int)seconds;
 		}
 	}
 }

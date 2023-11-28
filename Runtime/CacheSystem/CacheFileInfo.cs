@@ -10,13 +10,14 @@ namespace YooAsset
 		/// <summary>
 		/// 写入资源包信息
 		/// </summary>
-		public static void WriteInfoToFile(string filePath, string dataFileCRC, long dataFileSize)
+		public static void WriteInfoToFile(string filePath, string dataFileCRC,string dataFileHash, long dataFileSize)
 		{
-			using (FileStream fs = new FileStream(filePath, FileMode.Create))
+			using (FileStream fs = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.Read))
 			{
 				SharedBuffer.Clear();
 				SharedBuffer.WriteUTF8(dataFileCRC);
 				SharedBuffer.WriteInt64(dataFileSize);
+				SharedBuffer.WriteUTF8(dataFileHash);
 				SharedBuffer.WriteToStream(fs);
 				fs.Flush();
 			}
@@ -25,12 +26,13 @@ namespace YooAsset
 		/// <summary>
 		/// 读取资源包信息
 		/// </summary>
-		public static void ReadInfoFromFile(string filePath, out string dataFileCRC, out long dataFileSize)
+		public static void ReadInfoFromFile(string filePath, out string dataFileCRC,out string dataFileHash, out long dataFileSize)
 		{
 			byte[] binaryData = FileUtility.ReadAllBytes(filePath);
 			BufferReader buffer = new BufferReader(binaryData);
 			dataFileCRC = buffer.ReadUTF8();
 			dataFileSize = buffer.ReadInt64();
+			dataFileHash = buffer.ReadUTF8();
 		}
 	}
 }

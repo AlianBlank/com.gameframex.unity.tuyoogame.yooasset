@@ -2,19 +2,18 @@
 
 namespace YooAsset.Editor
 {
-	public class EditorDefine
+	public class WindowsDefine
 	{
 #if UNITY_2019_4_OR_NEWER
 		/// <summary>
 		/// 停靠窗口类型集合
 		/// </summary>
-		public static readonly Type[] DockedWindowTypes = 
+		public static readonly Type[] DockedWindowTypes =
 		{
 			typeof(AssetBundleBuilderWindow),
 			typeof(AssetBundleCollectorWindow),
 			typeof(AssetBundleDebuggerWindow),
-			typeof(AssetBundleReporterWindow),
-			typeof(ShaderVariantCollectorWindow)
+			typeof(AssetBundleReporterWindow)
 		};
 #endif
 	}

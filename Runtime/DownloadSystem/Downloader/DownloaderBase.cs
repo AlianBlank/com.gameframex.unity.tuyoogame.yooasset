@@ -1,90 +1,86 @@
-﻿
+﻿using System;
+using UnityEngine;
+using UnityEngine.Networking;
+
 namespace YooAsset
 {
 	internal abstract class DownloaderBase
 	{
-		protected enum ESteps
+		public enum EStatus
 		{
-			None,
-			CheckTempFile,
-			PrepareDownload,
-			CreateResumeDownloader,
-			CreateGeneralDownloader,
-			CheckDownload,
-			VerifyingFile,
-			CachingFile,
-			TryAgain,
+			None = 0,
 			Succeed,
-			Failed,
+			Failed
 		}
 
 		protected readonly BundleInfo _bundleInfo;
-
-		protected ESteps _steps = ESteps.None;
-
-		protected int _timeout;
+		protected readonly System.Type _requesterType;
+		protected readonly int _timeout;
 		protected int _failedTryAgain;
-		protected int _requestCount;
+
+		protected IWebRequester _requester;
+		protected EStatus _status = EStatus.None;
+		protected string _lastestNetError = string.Empty;
+		protected long _lastestHttpCode = 0;
+
+		// 请求次数
+		protected int _requestCount = 0;
 		protected string _requestURL;
 
-		protected string _lastError = string.Empty;
-		protected long _lastCode = 0;
-		protected float _downloadProgress = 0f;
-		protected ulong _downloadedBytes = 0;
+		// 超时相关
+		protected bool _isAbort = false;
+		protected ulong _latestDownloadBytes;
+		protected float _latestDownloadRealtime;
+		protected float _tryAgainTimer;
 
+		/// <summary>
+		/// 是否等待异步结束
+		/// 警告：只能用于解压APP内部资源
+		/// </summary>
+		public bool WaitForAsyncComplete = false;
 
 		/// <summary>
 		/// 下载进度（0f~1f）
 		/// </summary>
-		public float DownloadProgress
-		{
-			get { return _downloadProgress; }
-		}
+		public float DownloadProgress { protected set; get; }
 
 		/// <summary>
 		/// 已经下载的总字节数
 		/// </summary>
-		public ulong DownloadedBytes
-		{
-			get { return _downloadedBytes; }
-		}
+		public ulong DownloadedBytes { protected set; get; }
+
+		/// <summary>
+		/// 引用计数
+		/// </summary>
+		public int RefCount { private set; get; }
 
 
-		public DownloaderBase(BundleInfo bundleInfo)
+		public DownloaderBase(BundleInfo bundleInfo, System.Type requesterType, int failedTryAgain, int timeout)
 		{
 			_bundleInfo = bundleInfo;
+			_requesterType = requesterType;
+			_failedTryAgain = failedTryAgain;
+			_timeout = timeout;
 		}
-		public void SendRequest(int failedTryAgain, int timeout)
-		{
-			if (_steps == ESteps.None)
-			{
-				_failedTryAgain = failedTryAgain;
-				_timeout = timeout;
-				_steps = ESteps.CheckTempFile;
-			}
-		}
+		public abstract void SendRequest(params object[] args);
 		public abstract void Update();
 		public abstract void Abort();
+		public abstract AssetBundle GetAssetBundle();
 
 		/// <summary>
-		/// 获取网络请求地址
+		/// 引用（引用计数递加）
 		/// </summary>
-		protected string GetRequestURL()
+		public void Reference()
 		{
-			// 轮流返回请求地址
-			_requestCount++;
-			if (_requestCount % 2 == 0)
-				return _bundleInfo.RemoteFallbackURL;
-			else
-				return _bundleInfo.RemoteMainURL;
+			RefCount++;
 		}
 
 		/// <summary>
-		/// 获取资源包信息
+		/// 释放（引用计数递减）
 		/// </summary>
-		public BundleInfo GetBundleInfo()
+		public void Release()
 		{
-			return _bundleInfo;
+			RefCount--;
 		}
 
 		/// <summary>
@@ -92,7 +88,7 @@ namespace YooAsset
 		/// </summary>
 		public bool IsDone()
 		{
-			return _steps == ESteps.Succeed || _steps == ESteps.Failed;
+			return _status == EStatus.Succeed || _status == EStatus.Failed;
 		}
 
 		/// <summary>
@@ -100,7 +96,7 @@ namespace YooAsset
 		/// </summary>
 		public bool HasError()
 		{
-			return _steps == ESteps.Failed;
+			return _status == EStatus.Failed;
 		}
 
 		/// <summary>
@@ -124,7 +120,63 @@ namespace YooAsset
 		/// </summary>
 		public string GetLastError()
 		{
-			return $"Failed to download : {_requestURL} Error : {_lastError} Code : {_lastCode}";
+			return $"Failed to download : {_requestURL} Error : {_lastestNetError} Code : {_lastestHttpCode}";
+		}
+
+		/// <summary>
+		/// 获取下载文件的大小
+		/// </summary>
+		/// <returns></returns>
+		public long GetDownloadFileSize()
+		{
+			return _bundleInfo.Bundle.FileSize;
+		}
+
+		/// <summary>
+		/// 获取下载的资源包名称
+		/// </summary>
+		public string GetDownloadBundleName()
+		{
+			return _bundleInfo.Bundle.BundleName;
+		}
+
+
+		/// <summary>
+		/// 获取网络请求地址
+		/// </summary>
+		protected string GetRequestURL()
+		{
+			// 轮流返回请求地址
+			_requestCount++;
+			if (_requestCount % 2 == 0)
+				return _bundleInfo.RemoteFallbackURL;
+			else
+				return _bundleInfo.RemoteMainURL;
+		}
+
+		/// <summary>
+		/// 超时判定方法
+		/// </summary>
+		protected void CheckTimeout()
+		{
+			// 注意：在连续时间段内无新增下载数据及判定为超时
+			if (_isAbort == false)
+			{
+				if (_latestDownloadBytes != DownloadedBytes)
+				{
+					_latestDownloadBytes = DownloadedBytes;
+					_latestDownloadRealtime = Time.realtimeSinceStartup;
+				}
+
+				float offset = Time.realtimeSinceStartup - _latestDownloadRealtime;
+				if (offset > _timeout)
+				{
+					YooLogger.Warning($"Web file request timeout : {_requestURL}");
+					if(_requester != null)
+						_requester.Abort();
+					_isAbort = true;
+				}
+			}
 		}
 	}
 }

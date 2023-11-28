@@ -1,53 +1,35 @@
-﻿using UnityEditor;
+﻿using System;
+using System.IO;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEditor;
 
 namespace YooAsset.Editor
 {
 	/// <summary>
 	/// 构建参数
 	/// </summary>
-	public class BuildParameters
+	public abstract class BuildParameters
 	{
 		/// <summary>
-		/// SBP构建参数
+		/// 构建输出的根目录
 		/// </summary>
-		public class SBPBuildParameters
-		{
-			/// <summary>
-			/// 生成代码防裁剪配置
-			/// </summary>
-			public bool WriteLinkXML = true;
-
-			/// <summary>
-			/// 缓存服务器地址
-			/// </summary>
-			public string CacheServerHost;
-
-			/// <summary>
-			/// 缓存服务器端口
-			/// </summary>
-			public int CacheServerPort;
-		}
+		public string BuildOutputRoot;
 
 		/// <summary>
-		/// 可编程构建管线的参数
+		/// 内置文件的根目录
 		/// </summary>
-		public SBPBuildParameters SBPParameters;
-
+		public string BuildinFileRoot;
 
 		/// <summary>
-		/// 输出的根目录
+		/// 构建管线
 		/// </summary>
-		public string OutputRoot;
+		public string BuildPipeline;
 
 		/// <summary>
 		/// 构建的平台
 		/// </summary>
 		public BuildTarget BuildTarget;
-
-		/// <summary>
-		/// 构建管线
-		/// </summary>
-		public EBuildPipeline BuildPipeline;
 
 		/// <summary>
 		/// 构建模式
@@ -69,40 +51,159 @@ namespace YooAsset.Editor
 		/// 验证构建结果
 		/// </summary>
 		public bool VerifyBuildingResult = false;
-		
-		/// <summary>
-		/// 加密类
-		/// </summary>
-		public IEncryptionServices EncryptionServices = null;
 
 		/// <summary>
-		/// 补丁文件名称的样式
+		/// 资源包名称样式
 		/// </summary>
-		public EOutputNameStyle OutputNameStyle = EOutputNameStyle.HashName;
+		public EFileNameStyle FileNameStyle;
 
 		/// <summary>
-		/// 拷贝内置资源选项
+		/// 内置文件的拷贝选项
 		/// </summary>
-		public ECopyBuildinFileOption CopyBuildinFileOption = ECopyBuildinFileOption.None;
+		public EBuildinFileCopyOption BuildinFileCopyOption;
 
 		/// <summary>
-		/// 拷贝内置资源的标签
+		/// 内置文件的拷贝参数
 		/// </summary>
-		public string CopyBuildinFileTags = string.Empty;
+		public string BuildinFileCopyParams;
 
 		/// <summary>
-		/// 压缩选项
+		/// 资源包加密服务类
 		/// </summary>
-		public ECompressOption CompressOption = ECompressOption.Uncompressed;
+		public IEncryptionServices EncryptionServices;
+
+
+		private string _pipelineOutputDirectory = string.Empty;
+		private string _packageOutputDirectory = string.Empty;
+		private string _packageRootDirectory = string.Empty;
+		private string _buildinRootDirectory = string.Empty;
 
 		/// <summary>
-		/// 禁止写入类型树结构（可以降低包体和内存并提高加载效率）
+		/// 检测构建参数是否合法
 		/// </summary>
-		public bool DisableWriteTypeTree = false;
+		public virtual void CheckBuildParameters()
+		{
+			// 检测当前是否正在构建资源包
+			if (UnityEditor.BuildPipeline.isBuildingPlayer)
+			{
+				string message = BuildLogger.GetErrorMessage(ErrorCode.ThePipelineIsBuiding, "The pipeline is buiding, please try again after finish !");
+				throw new Exception(message);
+			}
+
+			// 检测是否有未保存场景
+			if (BuildMode != EBuildMode.SimulateBuild)
+			{
+				if (EditorTools.HasDirtyScenes())
+				{
+					string message = BuildLogger.GetErrorMessage(ErrorCode.FoundUnsavedScene, "Found unsaved scene !");
+					throw new Exception(message);
+				}
+			}
+
+			// 检测构建参数合法性
+			if (BuildTarget == BuildTarget.NoTarget)
+			{
+				string message = BuildLogger.GetErrorMessage(ErrorCode.NoBuildTarget, "Please select the build target platform !");
+				throw new Exception(message);
+			}
+			if (string.IsNullOrEmpty(PackageName))
+			{
+				string message = BuildLogger.GetErrorMessage(ErrorCode.PackageNameIsNullOrEmpty, "Package name is null or empty !");
+				throw new Exception(message);
+			}
+			if (string.IsNullOrEmpty(PackageVersion))
+			{
+				string message = BuildLogger.GetErrorMessage(ErrorCode.PackageVersionIsNullOrEmpty, "Package version is null or empty !");
+				throw new Exception(message);
+			}
+			if (string.IsNullOrEmpty(BuildOutputRoot))
+			{
+				string message = BuildLogger.GetErrorMessage(ErrorCode.BuildOutputRootIsNullOrEmpty, "Build output root is null or empty !");
+				throw new Exception(message);
+			}
+			if (string.IsNullOrEmpty(BuildinFileRoot))
+			{
+				string message = BuildLogger.GetErrorMessage(ErrorCode.BuildinFileRootIsNullOrEmpty, "Buildin file root is null or empty !");
+				throw new Exception(message);
+			}
+
+			// 强制构建删除包裹目录
+			if (BuildMode == EBuildMode.ForceRebuild)
+			{
+				string packageRootDirectory = GetPackageRootDirectory();
+				if (EditorTools.DeleteDirectory(packageRootDirectory))
+				{
+					BuildLogger.Log($"Delete package root directory: {packageRootDirectory}");
+				}
+			}
+
+			// 检测包裹输出目录是否存在
+			if (BuildMode != EBuildMode.SimulateBuild)
+			{
+				string packageOutputDirectory = GetPackageOutputDirectory();
+				if (Directory.Exists(packageOutputDirectory))
+				{
+					string message = BuildLogger.GetErrorMessage(ErrorCode.PackageOutputDirectoryExists, $"Package outout directory exists: {packageOutputDirectory}");
+					throw new Exception(message);
+				}
+			}
+
+			// 如果输出目录不存在
+			string pipelineOutputDirectory = GetPipelineOutputDirectory();
+			if (EditorTools.CreateDirectory(pipelineOutputDirectory))
+			{
+				BuildLogger.Log($"Create pipeline output directory: {pipelineOutputDirectory}");
+			}
+		}
+
 
 		/// <summary>
-		/// 忽略类型树变化
+		/// 获取构建管线的输出目录
 		/// </summary>
-		public bool IgnoreTypeTreeChanges = true;
+		/// <returns></returns>
+		public string GetPipelineOutputDirectory()
+		{
+			if (string.IsNullOrEmpty(_pipelineOutputDirectory))
+			{
+				_pipelineOutputDirectory = $"{BuildOutputRoot}/{BuildTarget}/{PackageName}/{YooAssetSettings.OutputFolderName}";
+			}
+			return _pipelineOutputDirectory;
+		}
+
+		/// <summary>
+		/// 获取本次构建的补丁输出目录
+		/// </summary>
+		public string GetPackageOutputDirectory()
+		{
+			if (string.IsNullOrEmpty(_packageOutputDirectory))
+			{
+				_packageOutputDirectory = $"{BuildOutputRoot}/{BuildTarget}/{PackageName}/{PackageVersion}";
+			}
+			return _packageOutputDirectory;
+		}
+
+		/// <summary>
+		/// 获取本次构建的补丁根目录
+		/// </summary>
+		public string GetPackageRootDirectory()
+		{
+			if (string.IsNullOrEmpty(_packageRootDirectory))
+			{
+				_packageRootDirectory = $"{BuildOutputRoot}/{BuildTarget}/{PackageName}";
+			}
+			return _packageRootDirectory;
+		}
+
+		/// <summary>
+		/// 获取内置资源的根目录
+		/// </summary>
+		public string GetBuildinRootDirectory()
+		{
+			if (string.IsNullOrEmpty(_buildinRootDirectory))
+			{
+				_buildinRootDirectory = $"{BuildinFileRoot}/{PackageName}";
+			}
+			return _buildinRootDirectory;
+		}
 	}
 }

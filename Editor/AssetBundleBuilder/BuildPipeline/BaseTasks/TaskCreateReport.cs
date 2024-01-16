@@ -37,10 +37,10 @@ namespace YooAsset.Editor
 				buildReport.Summary.IncludeAssetGUID = buildMapContext.Command.IncludeAssetGUID;
 				buildReport.Summary.IgnoreDefaultType = buildMapContext.Command.IgnoreDefaultType;
 				buildReport.Summary.AutoCollectShaders = buildMapContext.Command.AutoCollectShaders;
-				buildReport.Summary.EncryptionClassName = buildParameters.EncryptionServices == null ?
-					"null" : buildParameters.EncryptionServices.GetType().FullName;
 
 				// 构建参数
+                buildReport.Summary.EnableSharePackRule = buildParameters.EnableSharePackRule;
+                buildReport.Summary.EncryptionClassName = buildParameters.EncryptionServices == null ? "null" : buildParameters.EncryptionServices.GetType().FullName;
 				if (buildParameters.BuildPipeline == nameof(BuiltinBuildPipeline))
 				{
 					var builtinBuildParameters = buildParameters as BuiltinBuildParameters;
@@ -108,7 +108,7 @@ namespace YooAsset.Editor
 			}
 
 			// 冗余资源列表
-			buildReport.RedundancyInfos = new List<ReportRedundancyInfo>(buildMapContext.RedundancyInfos);
+            buildReport.IndependAssets = new List<ReportIndependAsset>(buildMapContext.IndependAssets);
 
 			// 序列化文件
 			string fileName = YooAssetSettingsData.GetReportFileName(buildParameters.PackageName, buildParameters.PackageVersion);
@@ -140,21 +140,21 @@ namespace YooAsset.Editor
 			var bundleInfo = buildMapContext.GetBundleInfo(bundleName);
 			{
 				BuildAssetInfo findAssetInfo = null;
-				foreach (var assetInfo in bundleInfo.MainAssets)
-				{
-					if (assetInfo.AssetPath == assetPath)
-					{
-						findAssetInfo = assetInfo;
-						break;
-					}
-				}
+                foreach (var buildAsset in bundleInfo.MainAssets)
+                {
+                    if (buildAsset.AssetInfo.AssetPath == assetPath)
+                    {
+                        findAssetInfo = buildAsset;
+                        break;
+                    }
+                }
 				if (findAssetInfo == null)
 				{
 					throw new Exception($"Should never get here ! Not found asset {assetPath} in bunlde {bundleName}");
 				}
 				foreach (var dependAssetInfo in findAssetInfo.AllDependAssetInfos)
 				{
-					result.Add(dependAssetInfo.AssetPath);
+                    result.Add(dependAssetInfo.AssetInfo.AssetPath);
 				}
 			}
 			return result;

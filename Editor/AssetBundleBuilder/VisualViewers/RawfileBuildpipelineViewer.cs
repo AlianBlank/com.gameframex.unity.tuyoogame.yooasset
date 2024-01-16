@@ -20,7 +20,7 @@ namespace YooAsset.Editor
 		}
 
 		/// <summary>
-		/// Ö´ÐÐ¹¹½¨
+		/// æ‰§è¡Œæž„å»º
 		/// </summary>
 		protected override void ExecuteBuild()
 		{

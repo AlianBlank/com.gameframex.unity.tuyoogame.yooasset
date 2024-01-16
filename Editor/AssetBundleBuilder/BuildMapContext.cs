@@ -16,7 +16,7 @@ namespace YooAsset.Editor
 		/// <summary>
 		/// 冗余的资源列表
 		/// </summary>
-		public readonly List<ReportRedundancyInfo> RedundancyInfos = new List<ReportRedundancyInfo>(1000);
+        public readonly List<ReportIndependAsset> IndependAssets = new List<ReportIndependAsset>(1000);
 
 
 		/// <summary>

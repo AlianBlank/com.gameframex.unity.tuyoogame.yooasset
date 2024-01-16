@@ -65,6 +65,22 @@ namespace YooAsset
 		}
 
 		// 查询相关
+#if UNITY_WECHAT_GAME
+        private WeChatWASM.WXFileSystemManager _wxFileSystemMgr;
+        private bool IsCachedPackageBundle(PackageBundle packageBundle)
+        {
+            if (_wxFileSystemMgr == null)
+                _wxFileSystemMgr = WeChatWASM.WX.GetFileSystemManager();
+            string filePath = WeChatWASM.WX.env.USER_DATA_PATH + packageBundle.FileName;
+            string result = _wxFileSystemMgr.AccessSync(filePath);
+            return result.Equals("access:ok");
+        }
+#else
+        private bool IsCachedPackageBundle(PackageBundle packageBundle)
+        {
+            return false;
+        }
+#endif
 		private bool IsBuildinPackageBundle(PackageBundle packageBundle)
 		{
 			return _buildinQueryServices.Query(PackageName, packageBundle.FileName);
@@ -116,6 +132,8 @@ namespace YooAsset
 			List<PackageBundle> downloadList = new List<PackageBundle>(1000);
 			foreach (var packageBundle in manifest.BundleList)
 			{
+                if (IsCachedPackageBundle(packageBundle))
+                    continue;
 				// 忽略APP资源
 				if (IsBuildinPackageBundle(packageBundle))
 					continue;
@@ -137,6 +155,8 @@ namespace YooAsset
 			List<PackageBundle> downloadList = new List<PackageBundle>(1000);
 			foreach (var packageBundle in manifest.BundleList)
 			{
+                if (IsCachedPackageBundle(packageBundle))
+                    continue;
 				// 忽略APP资源
 				if (IsBuildinPackageBundle(packageBundle))
 					continue;
@@ -194,6 +214,8 @@ namespace YooAsset
 			List<PackageBundle> downloadList = new List<PackageBundle>(1000);
 			foreach (var packageBundle in checkList)
 			{
+                if (IsCachedPackageBundle(packageBundle))
+                    continue;
 				// 忽略APP资源
 				if (IsBuildinPackageBundle(packageBundle))
 					continue;

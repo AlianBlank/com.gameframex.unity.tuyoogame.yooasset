@@ -25,25 +25,15 @@ namespace YooAsset.Editor
 		/// </summary>
 		public string Address { private set; get; }
 
-		/// <summary>
-		/// 资源路径
-		/// </summary>
-		public string AssetPath { private set; get; }
+        /// <summary>
+        /// 资源信息
+        /// </summary>
+        public AssetInfo AssetInfo { private set; get; }
 
-		/// <summary>
-		/// 资源GUID
-		/// </summary>
-		public string AssetGUID { private set; get; }
-
-		/// <summary>
-		/// 资源类型
-		/// </summary>
-		public System.Type AssetType { private set; get; }
-
-		/// <summary>
-		/// 资源的分类标签
-		/// </summary>
-		public readonly List<string> AssetTags = new List<string>();
+        /// <summary>
+        /// 资源的分类标签
+        /// </summary>
+        public readonly List<string> AssetTags = new List<string>();
 
 		/// <summary>
 		/// 依赖的所有资源
@@ -52,25 +42,19 @@ namespace YooAsset.Editor
 		public List<BuildAssetInfo> AllDependAssetInfos { private set; get; }
 
 
-		public BuildAssetInfo(ECollectorType collectorType, string bundleName, string address, string assetPath)
+        public BuildAssetInfo(ECollectorType collectorType, string bundleName, string address, AssetInfo assetInfo)
 		{
 			CollectorType = collectorType;
 			BundleName = bundleName;
 			Address = address;
-			AssetPath = assetPath;
-
-			AssetGUID = UnityEditor.AssetDatabase.AssetPathToGUID(assetPath);
-			AssetType = UnityEditor.AssetDatabase.GetMainAssetTypeAtPath(assetPath);
+            AssetInfo = assetInfo;
 		}
-		public BuildAssetInfo(string assetPath)
+        public BuildAssetInfo(AssetInfo assetInfo)
 		{
 			CollectorType = ECollectorType.None;
 			BundleName = string.Empty;
 			Address = string.Empty;
-			AssetPath = assetPath;
-
-			AssetGUID = UnityEditor.AssetDatabase.AssetPathToGUID(assetPath);
-			AssetType = UnityEditor.AssetDatabase.GetMainAssetTypeAtPath(assetPath);
+            AssetInfo = assetInfo;
 		}
 
 
@@ -85,15 +69,16 @@ namespace YooAsset.Editor
 			AllDependAssetInfos = dependAssetInfos;
 		}
 
-		/// <summary>
-		/// 设置为统一的着色器包名
-		/// </summary>
-		public void SetShaderBundleName(string packageName, bool uniqueBundleName)
-		{
-			// 获取着色器打包规则结果
-			PackRuleResult shaderPackRuleResult = DefaultPackRule.CreateShadersPackRuleResult();
-			BundleName = shaderPackRuleResult.GetBundleName(packageName, uniqueBundleName);		
-		}
+        /// <summary>
+        /// 设置资源包名称
+        /// </summary>
+        public void SetBundleName(string bundleName)
+        {
+            if (HasBundleName())
+                throw new System.Exception("Should never get here !");
+
+            BundleName = bundleName;
+        }
 
 		/// <summary>
 		/// 添加资源的分类标签

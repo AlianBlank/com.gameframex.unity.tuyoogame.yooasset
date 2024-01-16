@@ -17,10 +17,11 @@
 1. 增加验证等级VeryHigh 为 Md5 文件哈希校验。
 2. 增加版本号的自动生成和点击生成新版本号。采用当前时间
 3. 增加资源对象`IsSucceed` 属性，标识是否加载成功
+4. 移除 `ScriptableBuildPipeline` 和 `RawFileBuildPipeline` 的支持
 
 # 官方文档
 
 [https://www.yooasset.com/docs/Introduce](https://www.yooasset.com/docs/Introduce)
 
 当前同步的版本信息：
-https://github.com/tuyoogame/YooAsset/commit/d4fcb868d8ccf2eb773aa8bd59b0a7bc59b41566
+https://github.com/tuyoogame/YooAsset/commit/d8a8afba5eb434bba28a0c9786cb3d0d0eb7dbbf

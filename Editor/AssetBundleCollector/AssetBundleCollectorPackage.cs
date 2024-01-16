@@ -89,13 +89,13 @@ namespace YooAsset.Editor
 			foreach (var group in Groups)
 			{
 				var temper = group.GetAllCollectAssets(command);
-				foreach (var assetInfo in temper)
-				{
-					if (result.ContainsKey(assetInfo.AssetPath) == false)
-						result.Add(assetInfo.AssetPath, assetInfo);
-					else
-						throw new Exception($"The collecting asset file is existed : {assetInfo.AssetPath}");
-				}
+                foreach (var collectAsset in temper)
+                {
+                    if (result.ContainsKey(collectAsset.AssetInfo.AssetPath) == false)
+                        result.Add(collectAsset.AssetInfo.AssetPath, collectAsset);
+                    else
+                        throw new Exception($"The collecting asset file is existed : {collectAsset.AssetInfo.AssetPath}");
+                }
 			}
 
 			// 检测可寻址地址是否重复
@@ -107,7 +107,7 @@ namespace YooAsset.Editor
 					if (collectInfoPair.Value.CollectorType == ECollectorType.MainAssetCollector)
 					{
 						string address = collectInfoPair.Value.Address;
-						string assetPath = collectInfoPair.Value.AssetPath;
+                        string assetPath = collectInfoPair.Value.AssetInfo.AssetPath;
 						if (string.IsNullOrEmpty(address))
 							continue;
 

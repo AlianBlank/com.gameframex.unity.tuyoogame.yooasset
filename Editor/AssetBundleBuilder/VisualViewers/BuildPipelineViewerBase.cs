@@ -76,7 +76,10 @@ namespace YooAsset.Editor
                 _buildModeField = new PopupField<Enum>(buildModeList, defaultIndex);
                 _buildModeField.label = "Build Mode";
                 _buildModeField.style.width = StyleWidth;
-                _buildModeField.RegisterValueChangedCallback(evt => { AssetBundleBuilderSetting.SetPackageBuildMode(PackageName, BuildPipeline, (EBuildMode)_buildModeField.value); });
+                _buildModeField.RegisterValueChangedCallback(evt =>
+                {
+                    AssetBundleBuilderSetting.SetPackageBuildMode(PackageName, BuildPipeline, (EBuildMode)_buildModeField.value);
+                });
                 buildModeContainer.Add(_buildModeField);
             }
 
@@ -96,7 +99,10 @@ namespace YooAsset.Editor
                     _encryptionField = new PopupField<Type>(encryptionClassTypes, defaultIndex);
                     _encryptionField.label = "Encryption";
                     _encryptionField.style.width = StyleWidth;
-                    _encryptionField.RegisterValueChangedCallback(evt => { AssetBundleBuilderSetting.SetPackageEncyptionClassName(PackageName, BuildPipeline, _encryptionField.value.FullName); });
+                    _encryptionField.RegisterValueChangedCallback(evt =>
+                    {
+                        AssetBundleBuilderSetting.SetPackageEncyptionClassName(PackageName, BuildPipeline, _encryptionField.value.FullName);
+                    });
                     encryptionContainer.Add(_encryptionField);
                 }
                 else
@@ -114,7 +120,10 @@ namespace YooAsset.Editor
             _compressionField.Init(compressOption);
             _compressionField.SetValueWithoutNotify(compressOption);
             _compressionField.style.width = StyleWidth;
-            _compressionField.RegisterValueChangedCallback(evt => { AssetBundleBuilderSetting.SetPackageCompressOption(PackageName, BuildPipeline, (ECompressOption)_compressionField.value); });
+            _compressionField.RegisterValueChangedCallback(evt =>
+            {
+                AssetBundleBuilderSetting.SetPackageCompressOption(PackageName, BuildPipeline, (ECompressOption)_compressionField.value);
+            });
 
             // 输出文件名称样式
             var fileNameStyle = AssetBundleBuilderSetting.GetPackageFileNameStyle(PackageName, BuildPipeline);
@@ -122,7 +131,10 @@ namespace YooAsset.Editor
             _outputNameStyleField.Init(fileNameStyle);
             _outputNameStyleField.SetValueWithoutNotify(fileNameStyle);
             _outputNameStyleField.style.width = StyleWidth;
-            _outputNameStyleField.RegisterValueChangedCallback(evt => { AssetBundleBuilderSetting.SetPackageFileNameStyle(PackageName, BuildPipeline, (EFileNameStyle)_outputNameStyleField.value); });
+            _outputNameStyleField.RegisterValueChangedCallback(evt =>
+            {
+                AssetBundleBuilderSetting.SetPackageFileNameStyle(PackageName, BuildPipeline, (EFileNameStyle)_outputNameStyleField.value);
+            });
 
             // 首包文件拷贝选项
             var buildinFileCopyOption = AssetBundleBuilderSetting.GetPackageBuildinFileCopyOption(PackageName, BuildPipeline);
@@ -140,7 +152,10 @@ namespace YooAsset.Editor
             var buildinFileCopyParams = AssetBundleBuilderSetting.GetPackageBuildinFileCopyParams(PackageName, BuildPipeline);
             _copyBuildinFileTagsField = Root.Q<TextField>("CopyBuildinFileParam");
             _copyBuildinFileTagsField.SetValueWithoutNotify(buildinFileCopyParams);
-            _copyBuildinFileTagsField.RegisterValueChangedCallback(evt => { AssetBundleBuilderSetting.SetPackageBuildinFileCopyParams(PackageName, BuildPipeline, _copyBuildinFileTagsField.value); });
+            _copyBuildinFileTagsField.RegisterValueChangedCallback(evt =>
+            {
+                AssetBundleBuilderSetting.SetPackageBuildinFileCopyParams(PackageName, BuildPipeline, _copyBuildinFileTagsField.value);
+            });
 
             // 构建按钮
             var buildButton = Root.Q<Button>("Build");

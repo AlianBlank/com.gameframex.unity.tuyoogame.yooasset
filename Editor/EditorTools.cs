@@ -496,7 +496,13 @@ namespace YooAsset.Editor
 			return fileInfo.Length;
 		}
 
-		/// <summary>
+        /// <summary>
+        /// 获取文件的哈希值
+        /// </summary>
+        public static string GetFileCRC32(string filePath)
+        {
+            return HashUtility.FileCRC32(filePath);
+        }
 		/// 读取文件的所有文本内容
 		/// </summary>
 		public static string ReadFileAllText(string filePath)

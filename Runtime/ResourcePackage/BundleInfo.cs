@@ -116,24 +116,32 @@ namespace YooAsset
 
         public string CachedDataFilePath
         {
-            get { return _assist.Persistent.GetCachedDataFilePath(Bundle); }
+            get
+            {
+                return _assist.Persistent.GetCachedDataFilePath(Bundle);
         }
-
+        }
         public string CachedInfoFilePath
         {
-            get { return _assist.Persistent.GetCachedInfoFilePath(Bundle); }
+            get
+            {
+                return _assist.Persistent.GetCachedInfoFilePath(Bundle);
         }
-
+        }
         public string TempDataFilePath
         {
-            get { return _assist.Persistent.GetTempDataFilePath(Bundle); }
+            get
+            {
+                return _assist.Persistent.GetTempDataFilePath(Bundle);
         }
-
+        }
         public string BuildinFilePath
         {
-            get { return _assist.Persistent.GetBuildinFilePath(Bundle); }
+            get
+            {
+                return _assist.Persistent.GetBuildinFilePath(Bundle);
         }
-
+        }
         #endregion
 
         #region Download

@@ -47,10 +47,15 @@ namespace YooAsset.Editor
 		public string PackageVersion;
 
 
-		/// <summary>
-		/// 验证构建结果
-		/// </summary>
-		public bool VerifyBuildingResult = false;
+        /// <summary>
+        /// 是否启用共享资源打包
+        /// </summary>
+        public bool EnableSharePackRule = false;
+
+        /// <summary>
+        /// 验证构建结果
+        /// </summary>
+        public bool VerifyBuildingResult = false;
 
 		/// <summary>
 		/// 资源包名称样式
@@ -161,7 +166,7 @@ namespace YooAsset.Editor
 		/// 获取构建管线的输出目录
 		/// </summary>
 		/// <returns></returns>
-		public string GetPipelineOutputDirectory()
+        public virtual string GetPipelineOutputDirectory()
 		{
 			if (string.IsNullOrEmpty(_pipelineOutputDirectory))
 			{
@@ -173,7 +178,7 @@ namespace YooAsset.Editor
 		/// <summary>
 		/// 获取本次构建的补丁输出目录
 		/// </summary>
-		public string GetPackageOutputDirectory()
+        public virtual string GetPackageOutputDirectory()
 		{
 			if (string.IsNullOrEmpty(_packageOutputDirectory))
 			{
@@ -185,7 +190,7 @@ namespace YooAsset.Editor
 		/// <summary>
 		/// 获取本次构建的补丁根目录
 		/// </summary>
-		public string GetPackageRootDirectory()
+        public virtual string GetPackageRootDirectory()
 		{
 			if (string.IsNullOrEmpty(_packageRootDirectory))
 			{
@@ -197,7 +202,7 @@ namespace YooAsset.Editor
 		/// <summary>
 		/// 获取内置资源的根目录
 		/// </summary>
-		public string GetBuildinRootDirectory()
+        public virtual string GetBuildinRootDirectory()
 		{
 			if (string.IsNullOrEmpty(_buildinRootDirectory))
 			{

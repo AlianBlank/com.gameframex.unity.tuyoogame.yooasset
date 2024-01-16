@@ -1144,19 +1144,19 @@ namespace YooAsset
 		[Conditional("DEBUG")]
 		private void DebugCheckRawFileLoadMethod(string method)
 		{
-			if (_playModeImpl.ActiveManifest.BuildPipeline != EDefaultBuildPipeline.RawFileBuildPipeline.ToString())
-			{
-				throw new Exception($"Cannot load asset bundle file using {method} method !");
-			}
+			// if (_playModeImpl.ActiveManifest.BuildPipeline != EDefaultBuildPipeline.RawFileBuildPipeline.ToString())
+			// {
+			// 	throw new Exception($"Cannot load asset bundle file using {method} method !");
+			// }
 		}
 
 		[Conditional("DEBUG")]
 		private void DebugCheckAssetLoadMethod(string method)
 		{
-			if (_playModeImpl.ActiveManifest.BuildPipeline == EDefaultBuildPipeline.RawFileBuildPipeline.ToString())
-			{
-				throw new Exception($"Cannot load raw file using {method} method !");
-			}
+			// if (_playModeImpl.ActiveManifest.BuildPipeline == EDefaultBuildPipeline.RawFileBuildPipeline.ToString())
+			// {
+			// 	throw new Exception($"Cannot load raw file using {method} method !");
+			// }
 		}
 
 		[Conditional("DEBUG")]

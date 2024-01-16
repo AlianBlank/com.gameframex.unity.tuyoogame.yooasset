@@ -65,8 +65,6 @@ namespace YooAsset.Editor
 
 		public void CreateGUI()
 		{
-			Undo.undoRedoPerformed -= RefreshWindow;
-			Undo.undoRedoPerformed += RefreshWindow;
 
 			try
 			{
@@ -347,6 +345,15 @@ namespace YooAsset.Editor
 				Debug.LogError(e.ToString());
 			}
 		}
+        public void OnEnable()
+        {
+            Undo.undoRedoPerformed += RefreshWindow;
+        }
+        public void OnDisable()
+        {
+            if (Undo.undoRedoPerformed != null)
+                Undo.undoRedoPerformed -= RefreshWindow;
+        }
 		public void OnDestroy()
 		{
 			// 注意：清空所有撤销操作
@@ -991,15 +998,15 @@ namespace YooAsset.Editor
 
 				if (collectAssetInfos != null)
 				{
-					foreach (var collectAssetInfo in collectAssetInfos)
+                    foreach (var collectAsset in collectAssetInfos)
 					{
 						VisualElement elementRow = new VisualElement();
 						elementRow.style.flexDirection = FlexDirection.Row;
 						foldout.Add(elementRow);
 
-						string showInfo = collectAssetInfo.AssetPath;
+                        string showInfo = collectAsset.AssetInfo.AssetPath;
 						if (_enableAddressableToogle.value)
-							showInfo = $"[{collectAssetInfo.Address}] {collectAssetInfo.AssetPath}";
+                            showInfo = $"[{collectAsset.Address}] {collectAsset.AssetInfo.AssetPath}";
 
 						var label = new Label();
 						label.text = showInfo;

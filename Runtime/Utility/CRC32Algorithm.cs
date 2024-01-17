@@ -126,9 +126,9 @@ namespace YooAsset
 		public static uint Append(uint initial, byte[] input, int offset, int length)
 		{
 			if (input == null)
-				throw new ArgumentNullException("input");
+				throw new ArgumentNullException(nameof(input));
 			if (offset < 0 || length < 0 || offset + length > input.Length)
-				throw new ArgumentOutOfRangeException("length");
+				throw new ArgumentOutOfRangeException(nameof(length));
 			return AppendInternal(initial, input, offset, length);
 		}
 
@@ -181,7 +181,7 @@ namespace YooAsset
 		public static uint ComputeAndWriteToEnd(byte[] input, int offset, int length)
 		{
 			if (length + 4 > input.Length)
-				throw new ArgumentOutOfRangeException("length", "Length of data should be less than array length - 4 bytes of CRC data");
+				throw new ArgumentOutOfRangeException(nameof(length), "Length of data should be less than array length - 4 bytes of CRC data");
 			var crc = Append(0, input, offset, length);
 			var r = offset + length;
 			input[r] = (byte)crc;
@@ -199,7 +199,7 @@ namespace YooAsset
 		public static uint ComputeAndWriteToEnd(byte[] input)
 		{
 			if (input.Length < 4)
-				throw new ArgumentOutOfRangeException("input", "Input array should be 4 bytes at least");
+				throw new ArgumentOutOfRangeException(nameof(input), "Input array should be 4 bytes at least");
 			return ComputeAndWriteToEnd(input, 0, input.Length - 4);
 		}
 
@@ -223,17 +223,17 @@ namespace YooAsset
 		public static bool IsValidWithCrcAtEnd(byte[] input)
 		{
 			if (input.Length < 4)
-				throw new ArgumentOutOfRangeException("input", "Input array should be 4 bytes at least");
+				throw new ArgumentOutOfRangeException(nameof(input), "Input array should be 4 bytes at least");
 			return Append(0, input, 0, input.Length) == 0x2144DF1C;
 		}
 
 
-		private static readonly SafeProxy _proxy = new SafeProxy();
+		private static readonly SafeProxy Proxy = new SafeProxy();
 		private static uint AppendInternal(uint initial, byte[] input, int offset, int length)
 		{
 			if (length > 0)
 			{
-				return _proxy.Append(initial, input, offset, length);
+				return Proxy.Append(initial, input, offset, length);
 			}
 			else
 				return initial;

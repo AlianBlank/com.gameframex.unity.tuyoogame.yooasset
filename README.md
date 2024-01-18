@@ -24,4 +24,4 @@
 [https://www.yooasset.com/docs/Introduce](https://www.yooasset.com/docs/Introduce)
 
 当前同步的版本信息：
-https://github.com/tuyoogame/YooAsset/commit/d8a8afba5eb434bba28a0c9786cb3d0d0eb7dbbf
+https://github.com/tuyoogame/YooAsset/commit/6f13c021b9af26299ff08a4a384146b3ede9ebed

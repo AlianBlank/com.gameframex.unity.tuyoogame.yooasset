@@ -11,7 +11,7 @@ namespace YooAsset
 		/// </summary>
 		BuiltinBuildPipeline,
 
-		/*/// <summary>
+		/// <summary>
 		/// 可编程构建管线
 		/// </summary>
 		ScriptableBuildPipeline,
@@ -19,7 +19,7 @@ namespace YooAsset
 		/// <summary>
 		/// 原生文件构建管线
 		/// </summary>
-		RawFileBuildPipeline,*/
+		RawFileBuildPipeline,
 	}
 
 	/// <summary>

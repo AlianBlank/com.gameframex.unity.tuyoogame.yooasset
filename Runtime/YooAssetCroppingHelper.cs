@@ -163,8 +163,6 @@ namespace YooAsset
             _ = typeof(YooAsset.BufferWriter);
             _ = typeof(YooAsset.SafeProxy);
             _ = typeof(YooAsset.CRC32Algorithm);
-            _ = typeof(YooAsset.CRC64Algorithm);
-            _ = typeof(YooAsset.NonCryptographicHashAlgorithm);
             _ = typeof(YooAsset.ILogger);
             _ = typeof(YooAsset.YooLogger);
             _ = typeof(YooAsset.PathUtility);

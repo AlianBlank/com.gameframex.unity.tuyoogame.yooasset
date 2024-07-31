@@ -15,10 +15,10 @@ namespace YooAsset
 
 		private const int MAX_LOADER_COUNT = 64;
 
-		public delegate void OnDownloadOver(bool isSucceed);
-		public delegate void OnDownloadProgress(int totalDownloadCount, int currentDownloadCount, long totalDownloadBytes, long currentDownloadBytes);
-		public delegate void OnDownloadError(string fileName, string error);
-		public delegate void OnStartDownloadFile(string fileName, long sizeBytes);
+		public delegate void OnDownloadOver(string      packageName, bool   isSucceed);
+		public delegate void OnDownloadProgress(string  packageName, int    totalDownloadCount, int    currentDownloadCount, long totalDownloadBytes, long currentDownloadBytes);
+		public delegate void OnDownloadError(string     packageName, string fileName,           string error);
+		public delegate void OnStartDownloadFile(string packageName, string fileName,    long   sizeBytes);
 
 		private readonly DownloadManager _downloadMgr;
 		private readonly string _packageName;
@@ -161,7 +161,7 @@ namespace YooAsset
 					_lastDownloadBytes = downloadBytes;
 					_lastDownloadCount = _cachedDownloadCount;
 					Progress = (float)_lastDownloadBytes / TotalDownloadBytes;
-					OnDownloadProgressCallback?.Invoke(TotalDownloadCount, _lastDownloadCount, TotalDownloadBytes, _lastDownloadBytes);
+					OnDownloadProgressCallback?.Invoke(PackageName, TotalDownloadCount, _lastDownloadCount, TotalDownloadBytes, _lastDownloadBytes);
 				}
 
 				// 动态创建新的下载器到最大数量限制
@@ -179,7 +179,7 @@ namespace YooAsset
 						downloader.SendRequest();
 						_downloaders.Add(downloader);
 						_bundleInfoList.RemoveAt(index);
-						OnStartDownloadFileCallback?.Invoke(bundleInfo.Bundle.BundleName, bundleInfo.Bundle.FileSize);
+						OnStartDownloadFileCallback?.Invoke(PackageName, bundleInfo.Bundle.BundleName, bundleInfo.Bundle.FileSize);
 					}
 				}
 
@@ -193,15 +193,15 @@ namespace YooAsset
 						_steps = ESteps.Done;
 						Status = EOperationStatus.Failed;
 						Error = $"Failed to download file : {bundleName}";
-						OnDownloadErrorCallback?.Invoke(bundleName, failedDownloader.GetLastError());
-						OnDownloadOverCallback?.Invoke(false);
+						OnDownloadErrorCallback?.Invoke(PackageName, bundleName, failedDownloader.GetLastError());
+						OnDownloadOverCallback?.Invoke(PackageName, false);
 					}
 					else
 					{
 						// 结算成功
 						_steps = ESteps.Done;
 						Status = EOperationStatus.Succeed;
-						OnDownloadOverCallback?.Invoke(true);
+						OnDownloadOverCallback?.Invoke(PackageName, true);
 					}
 				}
 			}
